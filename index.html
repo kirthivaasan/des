@@ -1,0 +1,258 @@
+<html>
+<script src="des.js"></script>
+<script src="wikipedia.js"></script>
+<style>
+html {
+    background-color: #BDC3C7;
+}
+
+body {
+    font-family: Consolas;
+}
+
+.section {
+    padding-bottom: 50px;
+}
+
+textarea {
+    width: 600px;
+    height: 100px;
+}
+
+input[type=text] {
+    width: 600px;
+    padding: 12px 15px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #000;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+input[type="text"]:focus {
+  border-color: #66afe9;
+  outline: 0;
+  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102, 175, 233, 0.6);
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102, 175, 233, 0.6);
+} 
+
+label {
+    float: left;
+    width: 200px;
+}
+</style>
+
+<script>
+
+function get_key() {
+    key_options = document.getElementsByName("key_option");
+    var K = document.getElementById("key_input").value;
+    if (key_options[1].checked) {
+        K = hexToBinary(K);
+    }
+    return K;
+}
+
+function encrypt_DES() {
+    var M = document.getElementById("plaintext_input").value;
+    var K = get_key();
+    
+    var plaintext_options = document.getElementsByName("plaintext_option");
+    
+    if (plaintext_options[0].checked) {
+        // Ascii option
+        M = asciiToBinary(M);
+    } else if (plaintext_options[2].checked) {
+        // Hex option
+        M = hexToBinary(M);
+    }
+    
+    // Time code.
+    console.time("DES");
+    var ciphertext = DES(M, K);
+    console.timeEnd("DES");
+    
+    document.getElementById("output_textarea_binary").value = ciphertext;
+    document.getElementById("output_textarea_hex").value = binaryToHex(ciphertext);
+}
+
+function decrypt_DES() {
+    var C = document.getElementById("ciphertext_input").value; 
+    var K = get_key();
+    
+    var ciphertext_options = document.getElementsByName("ciphertext_option");
+    
+    if (ciphertext_options[1].checked) {
+        // Hex option
+        C = hexToBinary(C);
+    }
+    
+    var plaintext = DES(C, K, false);
+    
+    var ascii_text = binaryToAscii(plaintext);
+    document.getElementById("output_textarea_ascii_decrypt").value = ascii_text;
+    document.getElementById("output_textarea_binary_decrypt").value = plaintext;
+    document.getElementById("output_textarea_hex_decrypt").value = binaryToHex(plaintext);
+}
+
+function encrypt_ECB() {
+    var text = document.getElementById("ecb_input_plaintext").value;
+    var K = get_key();
+    var bitstring = asciiToBinary(text);
+    
+    
+    //Code for runtime values for plotting.
+    /*
+    var test_message = "blocking"; // 64 bit block message.
+    var bitstring_test = "";
+    
+    for (var i = 0; i < 256; i++) {
+    
+        bitstring_test += asciiToBinary(test_message);
+        console.log(bitstring_test.length);
+        console.time("ECB");
+        var test_ciphertext = ECB(bitstring_test, K, true);
+        console.timeEnd("ECB");
+    }*/
+    
+    // Testing with random strings of 8K in size.
+    /*
+    for (var i = 0; i < 10; i++) {
+        //var bitstring_test = asciiToBinary(wiki_articles[i]);
+        var randomString = makeRandomString(1024);
+        var bitstring_test = asciiToBinary(randomString);
+        console.log(bitstring_test.length);
+        
+        console.time("Regular ECB");
+        ECB(bitstring_test, K, true);
+        console.timeEnd("Regular ECB");
+        
+        
+        console.time("Optimized_ECB");
+        Optimized_ECB(bitstring_test, K, true);
+        console.timeEnd("Optimized_ECB");
+        
+    }
+    */
+    
+    var ciphertext = ECB(bitstring, K, true);
+    document.getElementById("output_textarea_ecb_encrypt").value = ciphertext;
+
+}
+
+function decrypt_ECB() {
+    var user_supplied_ciphertext = document.getElementById("ecb_input_ciphertext").value;
+    var K = get_key();
+    var plaintext = ECB(user_supplied_ciphertext, K, false);
+    document.getElementById("output_textarea_ecb_decrypt").value = plaintext;
+    document.getElementById("output_textarea_ecb_decrypt_ascii").value = binaryToAscii(plaintext);
+}
+
+function makeRandomString(n) {
+  var text = "";
+  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+  for (var i = 0; i < n; i++)
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+  return text;
+}
+
+</script>
+
+<body>
+<h1>DES</h1>
+
+
+<div class="section">
+    <label for="key">KEY</label>
+    <input type="text" id="key_input" value="0001001100110100010101110111100110011011101111001101111111110001"></input>
+    
+    
+    <div>
+        <input type="radio" name="key_option" value="binary">Binary</input>
+        <input type="radio" name="key_option" value="hex">Hex</input>
+    </div>
+    
+</div>
+
+<div class="section">
+    <label for="plaintext">Plaintext</label>
+    <input type="text" id="plaintext_input" value="0000000100100011010001010110011110001001101010111100110111101111"></input>
+    <button onclick="encrypt_DES()">Encrypt</button>
+    
+    
+    <div>
+        <input type="radio" name="plaintext_option" value="ascii">Ascii</input>
+        <input type="radio" name="plaintext_option" value="binary">Binary</input>
+        <input type="radio" name="plaintext_option" value="hex">Hex</input>
+    </div>
+    <br>
+     
+    <div>
+        <label>Binary:</label>
+        <textarea id="output_textarea_binary"></textarea>
+    </div>
+    <div>
+        <label>Hex:</label>
+        <textarea id="output_textarea_hex"></textarea>
+    </div>
+</div>
+
+<div class="section">
+    <label for="ciphertext">Ciphertext</label>
+    <input type="text" id="ciphertext_input" value=""></input>
+    <button onclick="decrypt_DES()">Decrypt</button>
+    
+    
+    <div>
+        <input type="radio" name="ciphertext_option" value="binary">Binary</input>
+        <input type="radio" name="ciphertext_option" value="hex">Hex</input>
+    </div>
+    <br>
+    
+    
+    <div>
+        <label>Binary:</label>
+        <textarea id="output_textarea_binary_decrypt"></textarea>
+    </div>
+    <div>
+        <label>Hex:</label>
+        <textarea id="output_textarea_hex_decrypt"></textarea>
+    </div>
+    <div>
+        <label>Ascii:</label>
+        <textarea id="output_textarea_ascii_decrypt"></textarea>
+    </div>
+</div>
+
+<h2>Electronic Code Book ECB mode</h2><br>
+<div class="section">
+    <div>
+        <label for="ecb_message">Message (ascii): </label>
+        <input type="text" id="ecb_input_plaintext" value="the quick brown fox jumps over the lazy dog"></input>
+        <button onclick="encrypt_ECB()">Encrypt ECB</button>
+    </div>
+    
+    <div>
+        <label for="ecb_ciphertext">Ciphertext (binary): </label>
+        <input type="text" id="ecb_input_ciphertext"></input>
+        <button onclick="decrypt_ECB()">Decrypt ECB</button>
+    </div>
+    
+    <label for="ecb_encrypt_output">Encryption output: </label>
+    <div><textarea id="output_textarea_ecb_encrypt"></textarea></div>
+    
+    <label for="ecb_decrypt_output">Decryption output: </label>
+    <div><textarea id="output_textarea_ecb_decrypt"></textarea></div>
+    
+    <label for="ecb_ascii_decrypt_output">Decryption output (ascii): </label>
+    <div><textarea id="output_textarea_ecb_decrypt_ascii"></textarea></div>
+    
+</div>
+
+
+<footer>&copy kirthip 2017</footer>
+</body>
+
+</html>
